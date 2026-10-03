@@ -85,11 +85,12 @@ input.pin{font-family:'Bricolage Grotesque';font-size:2.4rem;letter-spacing:.35e
 .seg{display:flex;gap:8px;margin-top:4px}.seg .btn{flex:1}
 .qrbig{position:fixed;inset:0;background:var(--bg);z-index:20;display:grid;place-content:center;justify-items:center;gap:18px;text-align:center;padding:20px;cursor:pointer}
 .qrbig .qr{margin:0;padding:18px}
+.net{font-size:.8rem;font-weight:700;padding:4px 12px;border-radius:99px;border:2px solid var(--ink)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="top"><span class="logo">QuizQuest</span><span class="who" id="who"></span></div>
+<div class="top"><span class="logo">QuizQuest</span><span class="net" id="net"></span><span class="who" id="who"></span></div>
 <main id="app"></main>
 
 <script>/* qrcodejs (MIT) inlined so the QR works offline and on school networks */
@@ -107,7 +108,7 @@ const joinUrl=c=>location.href.split('#')[0].split('?')[0]+'?code='+c;
    FB_URL filled -> rooms + accounts live in Firebase Realtime Database, so phones can join. */
 const FB_URL='https://quizquest-f411c-default-rtdb.asia-southeast1.firebasedatabase.app'; // e.g. 'https://quizquest-xxxxx-default-rtdb.firebaseio.com'  (no trailing slash)
 const cloud=k=>!!FB_URL&&(k.startsWith('qq-room-')||k==='qq-users');
-let cache={}, ready=!FB_URL, skew=0;
+let cache={}, ready=!FB_URL, skew=0, net=FB_URL?'connecting':'local';
 const now=()=>Date.now()+skew;
 const bc=('BroadcastChannel' in window)?new BroadcastChannel('qq'):null;
 function setPath(o,path,val){const a=Array.isArray(path)?path:path.split('/').filter(Boolean);let c=o;for(let i=0;i<a.length-1;i++){if(typeof c[a[i]]!=='object'||c[a[i]]===null)c[a[i]]={};c=c[a[i]]}
@@ -128,8 +129,9 @@ async function startCloud(){
   try{
     const t0=Date.now(), ts=await (await fetch(`${FB_URL}/qqclock.json`,{method:'PUT',body:JSON.stringify({'.sv':'timestamp'})})).json();
     skew=Number.isFinite(ts)?ts-(t0+Date.now())/2:0;
-    cache=(await (await fetch(FB_URL+'/qq.json')).json())||{};
-  }catch{toast('Cannot reach the database. Check the Firebase URL.')}
+    const res=await fetch(FB_URL+'/qq.json'); if(!res.ok)throw 0;
+    cache=(await res.json())||{}; net='online';
+  }catch{net='error';toast('Cannot reach the database. Publish the rules and check the URL.')}
   ready=true;draw();
   const es=new EventSource(FB_URL+'/qq.json');
   const on=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(!m)return;const path=(m.path||'/').split('/').filter(Boolean);
@@ -370,6 +372,7 @@ function room(){
 
 /* ---------- Render + timer ---------- */
 function draw(){
+  const nt=$('#net');if(nt){const m={local:['Offline mode · this browser only','#ffd84d'],connecting:['Connecting…','#ffd84d'],online:['Online ✓','#bff0d8'],error:['Database error','#ffc9d0']}[net];nt.textContent=m[0];nt.style.background=m[1]}
   if(!ready){$('#app').innerHTML='<div class="card center"><h2>Connecting…</h2></div>';return}
   const S=sess();
   if(!S)me.screen='login';
