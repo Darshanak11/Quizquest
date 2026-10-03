@@ -405,7 +405,7 @@ function room(){
 
   if(r.phase==='reveal'){
     const lb=rank(r), last=r.qi+1>=r.quiz.qs.length;
-    if(host)return `<div class="card center"><p class="mute">Question ${r.qi+1} of ${r.quiz.qs.length}</p><div class="big">${Object.values(r.players).filter(x=>x.last?.ok).length} of ${names.length} got it right</div></div>
+    if(host)return `<div class="card center"><p class="mute">Question ${r.qi+1} of ${r.quiz.qs.length}</p><div class="big">${Object.values(r.players).filter(x=>x.answers['q'+r.qi]?.a===q.c).length} of ${names.length} got it right</div></div>
      <div class="card"><h3>Leaderboard</h3><div class="lb">${lb.slice(0,5).map(x=>`<div><span>${esc(x.n)}</span><span>${x.s}</span></div>`).join('')}</div>
      <button class="btn full" data-a="next">${last?'Show final results':'Next question'}</button></div>`;
     const L=p?.last, pos=lb.findIndex(x=>x.n===me.name)+1;
