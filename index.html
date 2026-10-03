@@ -81,6 +81,10 @@ input.pin{font-family:'Bricolage Grotesque';font-size:2.4rem;letter-spacing:.35e
 .p0 .blk{height:140px;background:var(--hi)}.p1 .blk{height:100px;background:var(--c1);color:#fff;animation-delay:.15s}.p2 .blk{height:72px;background:var(--c3);color:#fff;animation-delay:.3s}
 @keyframes rise{from{height:0}}
 .lb.rest div:first-child{background:var(--soft);font-weight:500}
+.qr{display:inline-block;background:#fff;border:2px solid var(--ink);border-radius:16px;padding:12px;box-shadow:4px 4px 0 var(--ink);margin-top:14px}.qr img,.qr canvas{display:block}
+.seg{display:flex;gap:8px;margin-top:4px}.seg .btn{flex:1}
+.qrbig{position:fixed;inset:0;background:var(--bg);z-index:20;display:grid;place-content:center;justify-items:center;gap:18px;text-align:center;padding:20px;cursor:pointer}
+.qrbig .qr{margin:0;padding:18px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -88,9 +92,13 @@ input.pin{font-family:'Bricolage Grotesque';font-size:2.4rem;letter-spacing:.35e
 <div class="top"><span class="logo">QuizQuest</span><span class="who" id="who"></span></div>
 <main id="app"></main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const SH=['▲','◆','●','■'];
+function loadQR(){loadQR.t=1;const e=document.createElement('script');e.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';e.onload=e.onerror=()=>draw();document.head.append(e)}
+const joinUrl=c=>location.href.split('#')[0].split('?')[0]+'?code='+c;
+{const qp=new URLSearchParams(location.search).get('code');if(/^\d{4}$/.test(qp||''))sessionStorage.setItem('qq-pin',qp)}
 
 /* ---------- Sync layer ----------
    Works across tabs of ONE browser (localStorage + BroadcastChannel).
@@ -157,6 +165,13 @@ const act={
  logout(){
    sessionStorage.removeItem('campusLoginSession'); me={screen:'login'}; sessionStorage.setItem('qq-me',JSON.stringify(me)); draw(); toast('Logged out. Your room stays open for students.');
  },
+ copyLink(){navigator.clipboard?.writeText(joinUrl(me.code)).then(()=>toast('Link copied'),()=>toast('Copy failed. Select the link and copy it.'))},
+ bigqr(){
+  const o=document.createElement('div');o.className='qrbig';
+  o.innerHTML=`<p class="mute" style="font-size:1.1rem">Scan to join, or enter the code</p><div class="qr" id="qbig"></div><div class="code">${[...me.code].map(d=>`<span>${d}</span>`).join('')}</div><p class="mute">Tap anywhere to close</p>`;
+  document.body.append(o);o.onclick=()=>o.remove();
+  if(window.QRCode)new QRCode(o.querySelector('#qbig'),{text:joinUrl(me.code),width:300,height:300,colorDark:'#111a3a',colorLight:'#ffffff'});else o.querySelector('#qbig').remove();
+ },
  setTime(v){const r=getRoom();if(!r)return;r.quiz.limit=+v;db.set(roomKey(me.code),r);draw()},
  addTime(v){
   const r=getRoom();if(!r||r.phase!=='question')return;
@@ -175,7 +190,7 @@ const act={
   if(!r)return toast('No room with that code. Check with your teacher.');
   if(r.phase==='final')return toast('That quiz has already finished.');
   if(!r.players[name]){r.players[name]={score:0,answers:{},last:null};db.set(roomKey(code),r)}
-  setMe({role:'student',name,code,screen:'room'});
+  sessionStorage.removeItem('qq-pin'); setMe({role:'student',name,code,screen:'room'});
  },
  host(id){
   const q=quizzes().find(x=>x.id===id); let code;
@@ -264,7 +279,7 @@ function home(){
     <button class="btn full" data-a="menu">Host a quiz</button><button class="btn alt full" data-a="build">Create a quiz</button></div>
     ${mine.length?`<div class="card"><h3>Your open rooms</h3><p class="s">Students can still join and answer while you’re away.</p>${mine.map(r=>`<div class="qrow"><div><strong>Room ${r.code}</strong><div class="mute">${esc(r.quiz.title)} · ${Object.keys(r.players).length} students · ${r.phase}</div></div><div class="row"><button class="btn sm" data-a="resume" data-v="${r.code}">Resume</button><button class="btn alt sm" data-a="closeRoom" data-v="${r.code}">Close</button></div></div>`).join('')}</div>`:''}</div>`;}
   return `<div class="card" style="max-width:460px;margin:0 auto;width:100%"><h2>Hi ${esc(s.name)}</h2><p class="s">Type the 4-digit code shown on your teacher’s screen.</p>
-   <label for="pin">Room code</label><input id="pin" class="pin" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+   <label for="pin">Room code</label><input id="pin" class="pin" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off" value="${sessionStorage.getItem('qq-pin')||''}">
    <button class="btn full" data-a="join">Join room</button></div>`}
 
 function menu(){return `<div class="card"><div class="row between"><h2>Choose a quiz to host</h2><button class="btn alt sm" data-a="home">Back</button></div>
@@ -290,7 +305,10 @@ function room(){
   const cnt=Object.values(r.players).filter(x=>x.answers[r.qi]!==undefined).length;
 
   if(r.phase==='lobby')return `<div class="card center"><p class="s">${host?'Students join at this page with the code':'You’re in! Waiting for the teacher to start'}</p>
-   <div class="code">${[...r.code].map(d=>`<span>${d}</span>`).join('')}</div><p class="s" style="margin-top:14px">${esc(r.quiz.title)} · ${r.quiz.qs.length} questions</p>
+   <div class="code">${[...r.code].map(d=>`<span>${d}</span>`).join('')}</div><p class="s" style="margin:14px auto 0">${esc(r.quiz.title)} · ${r.quiz.qs.length} questions</p>
+   ${host?`<div><div class="qr" id="qr"></div><p class="mute" style="margin-top:8px">${location.protocol==='file:'?'To use the QR code, host this file on a web address so phones can open it.':'Scan to join. The code is filled in for you.'}</p>
+   <p class="mute" style="word-break:break-all;margin-top:4px">${esc(joinUrl(r.code))}</p>
+   <div class="row" style="justify-content:center;margin-top:10px"><button class="btn alt sm" data-a="copyLink">Copy link</button><button class="btn alt sm" data-a="bigqr">Show on full screen</button></div></div>`:''}
    <div class="chips">${names.map(n=>`<span class="chip">${esc(n)}</span>`).join('')||'<span class="mute">Waiting for students to join…</span>'}</div>
    ${host?`<div class="row" style="justify-content:center;margin-top:18px"><label for="lt" style="margin:0">Time per question</label><select id="lt" style="width:auto">${[...new Set([10,20,30,45,60,90,r.quiz.limit])].sort((a,b)=>a-b).map(t=>`<option value="${t}" ${t===r.quiz.limit?'selected':''}>${t} seconds</option>`).join('')}</select></div><div class="row" style="justify-content:center;margin-top:16px"><button class="btn" data-a="start" ${names.length?'':'disabled'}>Start quiz (${names.length} joined)</button><button class="btn alt" data-a="end">Close room</button></div>`:`<button class="btn alt" style="margin-top:20px" data-a="leave">Leave</button>`}</div>`;
 
@@ -333,6 +351,7 @@ function draw(){
   const keep={};document.querySelectorAll('#app input,#app select').forEach(el=>keep[el.id]=el.value);
   const v={login:loginView,home,menu,build,room}[me.screen]||home;
   $('#app').innerHTML=v();
+  const qr=$('#qr');if(qr){if(window.QRCode)new QRCode(qr,{text:joinUrl(me.code),width:170,height:170,colorDark:'#111a3a',colorLight:'#ffffff'});else if(!loadQR.t){loadQR();qr.textContent='Loading QR…'}else qr.remove()}
   if(['home','build','login'].includes(me.screen))Object.entries(keep).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&val)el.value=val});
   $('#who').innerHTML=S?`${me.code?(me.role==='host'?'Hosting room ':'Room ')+me.code+' · ':''}${esc(S.name)} (${S.role==='host'?'Teacher':'Student'}) <button class="logout" data-a="logout">Log out</button>`:'';
   clearInterval(tick); const r=me.screen==='room'?getRoom():null;
