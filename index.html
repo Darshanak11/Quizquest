@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QuizQuest</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eaf0ff;--ink:#111a3a;--card:#fff;--mute:#5a6488;--go:#3a4cff;--hi:#ffd84d;--ok:#10a066;--bad:#e5384f;--soft:#f3f6ff;
+--c0:#e8505b;--c1:#3a7bff;--c2:#ffb400;--c3:#13a37f;--sh:4px 4px 0 var(--ink)}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);background-image:radial-gradient(#c9d4fb 1.2px,transparent 1.2px);background-size:22px 22px;color:var(--ink);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased;line-height:1.45}
+h1,h2,h3,.code,.big,.q,.timer,.logo{font-family:'Bricolage Grotesque',sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--go);outline-offset:3px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 20px;max-width:980px;margin:0 auto}
+.logo{font-weight:800;font-size:1.4rem;display:flex;align-items:center;gap:10px}
+.logo::before{content:'Q';display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--hi);border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);font-size:1.1rem}
+.who{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.9rem;font-weight:500;background:var(--card);border:2px solid var(--ink);border-radius:99px;padding:6px 8px 6px 16px}
+.who:empty{display:none}
+.logout{background:var(--ink);color:#fff;border:0;border-radius:99px;padding:6px 14px;cursor:pointer;font-weight:700}
+main{max-width:980px;margin:0 auto;padding:8px 20px 48px;display:grid;gap:22px}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:22px;padding:26px;box-shadow:6px 6px 0 var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}.card{padding:20px}}
+h2{font-size:clamp(1.7rem,5vw,2.3rem);line-height:1.1;margin-bottom:8px;font-weight:800}
+h3{font-size:1.25rem;margin-bottom:8px}
+p.s{color:var(--mute);margin-bottom:16px;max-width:60ch}
+label{display:block;font-size:.88rem;font-weight:700;margin:14px 0 6px}
+input,select{width:100%;padding:13px 14px;border-radius:12px;border:2px solid var(--ink);background:#fff}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 4px #3a4cff40}
+input.pin{font-family:'Bricolage Grotesque';font-size:2.4rem;letter-spacing:.35em;text-align:center;font-weight:800;padding-left:.35em}
+.btn{border:2px solid var(--ink);border-radius:13px;padding:13px 22px;font-weight:700;cursor:pointer;background:var(--go);color:#fff;box-shadow:3px 3px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--ink)}
+.btn.alt{background:#fff;color:var(--ink)}
+.btn.full{width:100%;margin-top:16px;font-size:1.05rem}
+.btn.sm{padding:8px 14px;font-size:.88rem;box-shadow:2px 2px 0 var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.center{text-align:center}
+.code{display:flex;gap:clamp(8px,2.5vw,18px);justify-content:center;margin:6px 0}
+.code span{display:grid;place-items:center;width:clamp(58px,18vw,110px);aspect-ratio:3/4;font-size:clamp(2.8rem,12vw,6rem);font-weight:800;background:var(--hi);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);animation:pop .4s backwards}
+.code span:nth-child(2){animation-delay:.08s}.code span:nth-child(3){animation-delay:.16s}.code span:nth-child(4){animation-delay:.24s}
+@keyframes pop{from{transform:translateY(14px) scale(.85);opacity:0}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:44px;margin-top:8px}
+.chip{background:var(--soft);border:2px solid var(--ink);padding:7px 14px;border-radius:99px;font-weight:700;animation:pop .25s}
+.q{font-size:clamp(1.5rem,4.8vw,2.5rem);font-weight:800;text-align:center;line-height:1.2;padding:18px 4px 22px}
+.timer{font-size:clamp(3.5rem,14vw,7rem);font-weight:800;line-height:1}
+.bar{height:16px;border-radius:99px;background:var(--soft);border:2px solid var(--ink);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--go);width:100%;border-right:2px solid var(--ink)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.opts{grid-template-columns:1fr}}
+.opt{border:2px solid var(--ink);border-radius:16px;padding:20px 16px;font-weight:700;font-size:1.15rem;text-align:left;cursor:pointer;display:flex;gap:14px;align-items:center;color:#fff;min-height:88px;box-shadow:var(--sh);transition:transform .1s,box-shadow .1s,opacity .2s}
+.opt:hover:not(:disabled){transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.opt:active:not(:disabled){transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.opt:disabled{cursor:default}
+.opt b{display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:10px;background:#ffffff38;font-size:1.2rem}
+.c0{background:var(--c0)}.c1{background:var(--c1)}.c2{background:var(--c2);color:var(--ink)}.c3{background:var(--c3)}
+.opt.picked{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink);outline:4px solid var(--ink);outline-offset:3px}
+.opt.dim{opacity:.3}.opt.right{outline:4px solid var(--ok);outline-offset:3px}
+.lb{display:grid;gap:8px}
+.lb div{display:flex;justify-content:space-between;gap:10px;background:var(--soft);border:2px solid var(--ink);border-radius:13px;padding:11px 16px;font-weight:500}
+.lb div:first-child{background:var(--hi);font-weight:700}
+.big{font-weight:800;font-size:clamp(2rem,8vw,3.2rem);line-height:1.1}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.qrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--ink);background:var(--soft);border-radius:14px;margin-top:12px}
+.mute{color:var(--mute);font-size:.92rem}
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:13px 20px;border-radius:14px;font-weight:700;z-index:9;box-shadow:0 10px 30px #0004;max-width:90vw;text-align:center}
+  .hero h1{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:800;line-height:1.05;margin-bottom:14px}
+.pts{list-style:none;padding:0;display:grid;gap:10px;margin-top:6px}.pts li{display:flex;gap:10px;align-items:center;font-weight:500}
+.pts li::before{content:'✓';display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--hi);border:2px solid var(--ink);font-weight:800;flex:none}
+.dots{display:flex;gap:6px;margin-bottom:14px}.dots i{flex:1;height:9px;border-radius:9px;background:var(--soft);border:2px solid var(--ink)}
+.dots i.d{background:var(--ink)}.dots i.n{background:var(--hi)}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:22px 0 18px}
+.pl{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.pl .nm{font-weight:700;word-break:break-word}.pl .pt{color:var(--mute);font-size:.9rem;margin-bottom:6px}
+.blk{width:100%;border:2px solid var(--ink);border-bottom:0;border-radius:14px 14px 0 0;display:grid;place-items:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:2.2rem;animation:rise .8s backwards}
+.p0 .blk{height:140px;background:var(--hi)}.p1 .blk{height:100px;background:var(--c1);color:#fff;animation-delay:.15s}.p2 .blk{height:72px;background:var(--c3);color:#fff;animation-delay:.3s}
+@keyframes rise{from{height:0}}
+.lb.rest div:first-child{background:var(--soft);font-weight:500}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="top"><span class="logo">QuizQuest</span><span class="who" id="who"></span></div>
+<main id="app"></main>
+
+<script>
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SH=['▲','◆','●','■'];
+
+/* ---------- Sync layer ----------
+   Works across tabs of ONE browser (localStorage + BroadcastChannel).
+   For real multi-device classrooms, replace get/set with Firebase / Supabase / WebSocket. */
+const bc=('BroadcastChannel' in window)?new BroadcastChannel('qq'):null;
+const db={
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  set(k,v){localStorage.setItem(k,JSON.stringify(v));bc&&bc.postMessage(k)},
+  del(k){localStorage.removeItem(k);bc&&bc.postMessage(k)}
+};
+bc&&(bc.onmessage=()=>draw());
+addEventListener('storage',()=>draw());
+
+const starter=()=>[
+ {id:'sci',title:'Science quickfire',limit:20,qs:[
+  {t:'Which planet is known as the Red Planet?',o:['Mars','Venus','Jupiter','Mercury'],c:0},
+  {t:'Which gas do plants absorb from the air?',o:['Oxygen','Nitrogen','Carbon dioxide','Helium'],c:2},
+  {t:'Water boils at 100°C at sea level.',o:['True','False'],c:0}]},
+ {id:'his',title:'History trivia',limit:20,qs:[
+  {t:'The Great Wall was mainly built in which dynasty?',o:['Ming','Roman','Aztec','Victorian'],c:0},
+  {t:'The first moon landing was in 1969.',o:['True','False'],c:0}]}];
+const quizzes=()=>db.get('qq-quizzes',null)||(db.set('qq-quizzes',starter()),starter());
+
+/* ---------- Local identity (per tab) ---------- */
+let me=JSON.parse(sessionStorage.getItem('qq-me')||'{"screen":"home"}');
+const setMe=o=>{me={...me,...o};sessionStorage.setItem('qq-me',JSON.stringify(me));draw()};
+let draft={title:'',limit:20,qs:[]}, tick=null, auth={mode:'in',role:'user'};
+
+/* ---------- Accounts (demo-grade, browser-only) ----------
+   Login is kept per tab (sessionStorage) so a teacher and a student can test in two tabs of one browser. Format matches your old Login Page: campusLoginSession {loggedIn,name,email,role:'host'|'user'}.
+   For real security, move users + password check to a server. */
+const sess=()=>{try{const s=JSON.parse(sessionStorage.getItem('campusLoginSession'));return s&&s.loggedIn?s:null}catch{return null}};
+const users=()=>db.get('qq-users',[]);
+async function hash(t){
+  if(crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  let h=5381;for(const c of t)h=(h*33^c.charCodeAt(0))>>>0;return String(h);
+}
+const isHost=()=>sess()?.role==='host';
+
+const roomKey=c=>'qq-room-'+c, getRoom=()=>me.code?db.get(roomKey(me.code),null):null;
+const rank=r=>Object.entries(r.players).map(([n,p])=>({n,s:p.score})).sort((a,b)=>b.s-a.s);
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2200)};
+
+/* ---------- Actions ---------- */
+const act={
+ home:()=>setMe({screen:'home',code:null,role:null}),
+ authMode:v=>{auth.mode=v;draw()},
+ authRole:v=>{auth.role=v;draw()},
+ async signup(){
+  const name=$('#an').value.trim(), email=$('#ae').value.trim().toLowerCase(), pw=$('#ap').value;
+  if(!name)return toast('Enter your full name');
+  if(!/^\S+@\S+\.\S+$/.test(email))return toast('Enter a valid email address');
+  if(pw.length<6)return toast('Password must be at least 6 characters');
+  if(users().some(u=>u.email===email))return toast('That email already has an account. Sign in instead.');
+  db.set('qq-users',[...users(),{name,email,role:auth.role,pw:await hash(pw)}]);
+  signIn({name,email,role:auth.role});
+ },
+ async login(){
+  const email=$('#ae').value.trim().toLowerCase(), pw=$('#ap').value;
+  const u=users().find(x=>x.email===email);
+  if(!u||u.pw!==await hash(pw))return toast('Wrong email or password');
+  signIn(u);
+ },
+ logout(){
+   sessionStorage.removeItem('campusLoginSession'); me={screen:'login'}; sessionStorage.setItem('qq-me',JSON.stringify(me)); draw(); toast('Logged out. Your room stays open for students.');
+ },
+ setTime(v){const r=getRoom();if(!r)return;r.quiz.limit=+v;db.set(roomKey(me.code),r);draw()},
+ addTime(v){
+  const r=getRoom();if(!r||r.phase!=='question')return;
+  const base=r.quiz.limit*1000, used=Date.now()-r.startedAt;
+  r.extra=Math.max(5000-base,(r.extra||0)+ +v*1000);
+  db.set(roomKey(me.code),r);draw();toast((+v>0?'+':'−')+Math.abs(v)+' seconds');
+ },
+ resume:v=>setMe({role:'host',code:v,screen:'room',name:'Host'}),
+ closeRoom(v){db.del(roomKey(v));draw();toast('Room '+v+' closed')},
+ menu:()=>setMe({screen:'menu',role:'host'}),
+ build:()=>{draft={title:'',limit:20,qs:[]};setMe({screen:'build'})},
+ join(){
+  const code=$('#pin').value.trim(), name=sess().name;
+  if(!/^\d{4}$/.test(code))return toast('Enter the 4-digit room code');
+  const r=db.get(roomKey(code),null);
+  if(!r)return toast('No room with that code. Check with your teacher.');
+  if(r.phase==='final')return toast('That quiz has already finished.');
+  if(!r.players[name]){r.players[name]={score:0,answers:{},last:null};db.set(roomKey(code),r)}
+  setMe({role:'student',name,code,screen:'room'});
+ },
+ host(id){
+  const q=quizzes().find(x=>x.id===id); let code;
+  do{code=String(1000+Math.floor(Math.random()*9000))}while(db.get(roomKey(code),null));
+  db.set(roomKey(code),{code,quiz:q,phase:'lobby',qi:0,startedAt:0,players:{},hostEmail:sess().email});
+  setMe({role:'host',code,screen:'room',name:'Host'});
+ },
+ start:()=>startQ(0),
+ skip:()=>reveal(),
+ next(){const r=getRoom();r.qi+1>=r.quiz.qs.length?(r.phase='final',db.set(roomKey(me.code),r),draw()):startQ(r.qi+1)},
+ end(){db.del(roomKey(me.code));act.home()},
+ leave:()=>act.home(),
+ pick(i){
+  const r=getRoom(); if(!r||r.phase!=='question')return;
+  const p=r.players[me.name]; if(!p||p.answers[r.qi]!==undefined)return;
+  p.answers[r.qi]={a:+i,t:Date.now()-r.startedAt};
+  db.set(roomKey(me.code),r); draw();
+ },
+ addQ(){
+  const t=$('#qt').value.trim(), o=[0,1,2,3].map(i=>$('#o'+i).value.trim()), c=+$('#qc').value;
+  const idx=[];o.forEach((x,i)=>x&&idx.push(i));
+  if(!t)return toast('Write the question first');
+  if(idx.length<2)return toast('Add at least two answer options');
+  if(!o[c])return toast('The correct answer can’t be an empty option');
+  draft.title=$('#qz').value; draft.limit=+$('#ql').value;
+  draft.qs.push({t,o:idx.map(i=>o[i]),c:idx.indexOf(c)});
+  draw(); toast('Question added');
+ },
+ delQ(i){draft.title=$('#qz').value;draft.qs.splice(+i,1);draw()},
+ save(){
+  const title=$('#qz').value.trim(); draft.limit=+$('#ql').value;
+  if(!title)return toast('Give your quiz a title');
+  if(!draft.qs.length)return toast('Add at least one question');
+  db.set('qq-quizzes',[{id:'c'+Date.now(),title,limit:draft.limit,qs:draft.qs},...quizzes()]);
+  toast('Quiz saved'); setMe({screen:'menu'});
+ }
+};
+document.addEventListener('change',e=>{if(e.target.id==='lt')act.setTime(e.target.value)});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('#app input')){const b=document.querySelector('#app .btn.full');b&&b.click()}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled)act[b.dataset.a](b.dataset.v)});
+
+function signIn(u){
+  sessionStorage.setItem('campusLoginSession',JSON.stringify({loggedIn:true,name:u.name,email:u.email,role:u.role}));
+  setMe({screen:'home',code:null,role:null});
+}
+function startQ(i){
+  const r=getRoom(); r.extra=0; r.phase='question'; r.qi=i; r.startedAt=Date.now(); db.set(roomKey(me.code),r); draw();
+}
+function reveal(){
+  const r=getRoom(); if(!r||r.phase!=='question')return;
+  const q=r.quiz.qs[r.qi], lim=r.quiz.limit*1000+(r.extra||0);
+  for(const p of Object.values(r.players)){
+    const a=p.answers[r.qi], ok=!!a&&a.a===q.c;
+    const pts=ok?500+Math.round(500*Math.max(0,1-a.t/lim)):0;
+    p.score+=pts; p.last={ok,pts,answered:!!a};
+  }
+  r.phase='reveal'; db.set(roomKey(me.code),r); draw();
+}
+
+/* ---------- Views ---------- */
+const optsHtml=(q,r,mode,p)=>`<div class="opts">${q.o.map((o,i)=>{
+  const a=p?.answers[r.qi]?.a;
+  let cls=`opt c${i}`, dis='';
+  if(mode==='show'||mode==='locked')dis='disabled';
+  if(mode==='reveal'){dis='disabled';cls+=i===q.c?' right':' dim'}
+  if(mode==='locked'&&a===i)cls+=' picked';
+  return `<button class="${cls}" ${dis} data-a="pick" data-v="${i}"><b>${SH[i]}</b>${esc(o)}</button>`}).join('')}</div>`;
+
+function loginView(){
+  const up=auth.mode==='up';
+  return `<div class="grid2" style="align-items:center;margin-top:12px"><div class="hero"><h1>Quizzes your whole class plays together.</h1><p class="s">Fast, fair and live. No setup for students.</p><ul class="pts"><li>Teacher shares a 4-digit room code</li><li>Students answer on their own phones</li><li>Faster correct answers earn more points</li></ul></div><div class="card"><h2>${up?'Create your account':'Welcome back'}</h2>
+   <p class="s">${up?'Teachers host quizzes. Students join with a room code.':'Sign in to host or join a live quiz.'}</p>
+   ${up?`<label>I am a</label><div class="seg"><button class="btn ${auth.role==='host'?'':'alt'}" data-a="authRole" data-v="host">Teacher</button><button class="btn ${auth.role==='user'?'':'alt'}" data-a="authRole" data-v="user">Student</button></div>
+   <label for="an">Full name</label><input id="an" maxlength="30" autocomplete="name">`:''}
+   <label for="ae">Email</label><input id="ae" type="email" autocomplete="username">
+   <label for="ap">Password</label><input id="ap" type="password" autocomplete="${up?'new-password':'current-password'}">
+   <button class="btn full" data-a="${up?'signup':'login'}">${up?'Create account':'Sign in'}</button>
+   <button class="btn alt full" data-a="authMode" data-v="${up?'in':'up'}">${up?'I already have an account':'Create an account'}</button></div></div>`}
+
+function home(){
+  const s=sess();
+  if(s.role==='host'){
+   const mine=Object.keys(localStorage).filter(k=>k.startsWith('qq-room-')).map(k=>db.get(k,null)).filter(r=>r&&r.hostEmail===s.email);
+   return `<div class="grid2">
+   <div class="card"><h2>Hi ${esc(s.name)}</h2><p class="s">Pick a quiz, share the room code, and watch answers come in live.</p>
+    <button class="btn full" data-a="menu">Host a quiz</button><button class="btn alt full" data-a="build">Create a quiz</button></div>
+    ${mine.length?`<div class="card"><h3>Your open rooms</h3><p class="s">Students can still join and answer while you’re away.</p>${mine.map(r=>`<div class="qrow"><div><strong>Room ${r.code}</strong><div class="mute">${esc(r.quiz.title)} · ${Object.keys(r.players).length} students · ${r.phase}</div></div><div class="row"><button class="btn sm" data-a="resume" data-v="${r.code}">Resume</button><button class="btn alt sm" data-a="closeRoom" data-v="${r.code}">Close</button></div></div>`).join('')}</div>`:''}</div>`;}
+  return `<div class="card" style="max-width:460px;margin:0 auto;width:100%"><h2>Hi ${esc(s.name)}</h2><p class="s">Type the 4-digit code shown on your teacher’s screen.</p>
+   <label for="pin">Room code</label><input id="pin" class="pin" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+   <button class="btn full" data-a="join">Join room</button></div>`}
+
+function menu(){return `<div class="card"><div class="row between"><h2>Choose a quiz to host</h2><button class="btn alt sm" data-a="home">Back</button></div>
+ ${quizzes().map(q=>`<div class="qrow"><div><strong>${esc(q.title)}</strong><div class="mute">${q.qs.length} questions · ${q.limit}s each</div></div><button class="btn sm" data-a="host" data-v="${q.id}">Host</button></div>`).join('')}
+ <button class="btn alt full" data-a="build">Create a new quiz</button></div>`}
+
+function build(){return `<div class="grid2">
+ <div class="card"><h2>Create a quiz</h2>
+  <label for="qz">Quiz title</label><input id="qz" value="${esc(draft.title)}" placeholder="Chapter 4 review">
+  <label for="ql">Time per question</label><select id="ql">${[10,20,30,60].map(s=>`<option value="${s}" ${draft.limit===s?'selected':''}>${s} seconds</option>`).join('')}</select>
+  <label for="qt">Question</label><input id="qt" placeholder="What is the capital of France?">
+  ${[0,1,2,3].map(i=>`<label for="o${i}">${SH[i]} Option ${i+1}${i>1?' (optional)':''}</label><input id="o${i}">`).join('')}
+  <label for="qc">Correct answer</label><select id="qc">${[0,1,2,3].map(i=>`<option value="${i}">Option ${i+1}</option>`).join('')}</select>
+  <button class="btn full" data-a="addQ">Add question</button></div>
+ <div class="card"><h3>Questions (${draft.qs.length})</h3>
+  ${draft.qs.length?draft.qs.map((q,i)=>`<div class="qrow"><div><strong>${esc(q.t)}</strong><div class="mute">Answer: ${esc(q.o[q.c])}</div></div><button class="btn alt sm" data-a="delQ" data-v="${i}">Remove</button></div>`).join(''):'<p class="s">Questions you add will show up here. For true/false, fill in just two options.</p>'}
+  <button class="btn full" data-a="save">Save quiz</button><button class="btn alt full" data-a="menu">Cancel</button></div></div>`}
+
+function room(){
+  const r=getRoom();
+  if(!r)return `<div class="card center"><h2>This room has closed</h2><p class="s">The teacher ended the session.</p><button class="btn" data-a="home">Back to start</button></div>`;
+  const host=me.role==='host', names=Object.keys(r.players), q=r.quiz.qs[r.qi], p=r.players[me.name];
+  const cnt=Object.values(r.players).filter(x=>x.answers[r.qi]!==undefined).length;
+
+  if(r.phase==='lobby')return `<div class="card center"><p class="s">${host?'Students join at this page with the code':'You’re in! Waiting for the teacher to start'}</p>
+   <div class="code">${[...r.code].map(d=>`<span>${d}</span>`).join('')}</div><p class="s" style="margin-top:14px">${esc(r.quiz.title)} · ${r.quiz.qs.length} questions</p>
+   <div class="chips">${names.map(n=>`<span class="chip">${esc(n)}</span>`).join('')||'<span class="mute">Waiting for students to join…</span>'}</div>
+   ${host?`<div class="row" style="justify-content:center;margin-top:18px"><label for="lt" style="margin:0">Time per question</label><select id="lt" style="width:auto">${[...new Set([10,20,30,45,60,90,r.quiz.limit])].sort((a,b)=>a-b).map(t=>`<option value="${t}" ${t===r.quiz.limit?'selected':''}>${t} seconds</option>`).join('')}</select></div><div class="row" style="justify-content:center;margin-top:16px"><button class="btn" data-a="start" ${names.length?'':'disabled'}>Start quiz (${names.length} joined)</button><button class="btn alt" data-a="end">Close room</button></div>`:`<button class="btn alt" style="margin-top:20px" data-a="leave">Leave</button>`}</div>`;
+
+  if(r.phase==='question'){
+    const head=`<div class="dots">${r.quiz.qs.map((_,i)=>`<i class="${i<r.qi?'d':i===r.qi?'n':''}"></i>`).join('')}</div><div class="row between mute"><span>Question ${r.qi+1} of ${r.quiz.qs.length}</span><span id="tl" class="big" style="font-size:1.8rem"></span></div><div class="bar"><i id="bar"></i></div><div class="q">${esc(q.t)}</div>`;
+    if(host)return `<div class="card center"><p class="mute">Question ${r.qi+1} of ${r.quiz.qs.length}</p><div class="timer" id="tl"></div><div class="bar" style="margin-top:14px"><i id="bar"></i></div><div class="big" style="margin-top:28px">${cnt} / ${names.length}</div><p class="s">students answered</p><div class="row" style="justify-content:center"><button class="btn alt" data-a="addTime" data-v="-10">−10s</button><button class="btn alt" data-a="addTime" data-v="10">+10s</button><button class="btn" data-a="skip">Show results</button></div></div>`;
+    const done=p?.answers[r.qi]!==undefined;
+    return `<div class="card">${head}${optsHtml(q,r,done?'locked':'play',p)}${done?'<p class="s center" style="margin:16px 0 0">Answer locked in. Waiting for everyone else…</p>':''}</div>`;
+  }
+
+  if(r.phase==='reveal'){
+    const lb=rank(r), last=r.qi+1>=r.quiz.qs.length;
+    const counts=q.o.map((_,i)=>Object.values(r.players).filter(x=>x.answers[r.qi]?.a===i).length);
+    if(host)return `<div class="card center"><p class="mute">Question ${r.qi+1} of ${r.quiz.qs.length}</p><div class="big">${Object.values(r.players).filter(x=>x.last?.ok).length} of ${names.length} got it right</div></div>
+     <div class="card"><h3>Leaderboard</h3><div class="lb">${lb.slice(0,5).map(x=>`<div><span>${esc(x.n)}</span><span>${x.s}</span></div>`).join('')}</div>
+     <button class="btn full" data-a="next">${last?'Show final results':'Next question'}</button></div>`;
+    const L=p?.last, pos=lb.findIndex(x=>x.n===me.name)+1;
+    return `<div class="card center" style="background:${L?.ok?'#dcf7ea':'#ffe6ea'}"><div class="big ${L?.ok?'ok':'bad'}">${L?.ok?'Correct!':L?.answered?'Not quite':'Time’s up'}</div>
+     <p class="s">${L?.ok?`+${L.pts} points`:`The answer was ${esc(q.o[q.c])}`}</p>
+     <div class="row" style="justify-content:center;gap:32px"><div><div class="big">${p?.score??0}</div><div class="mute">points</div></div><div><div class="big">#${pos}</div><div class="mute">of ${lb.length}</div></div></div>
+     <p class="mute" style="margin-top:18px">Next question coming up…</p></div>`;
+  }
+
+  const lb=rank(r), pos=lb.findIndex(x=>x.n===me.name)+1;
+  return `<div class="card center"><h2>${host?'Final results':pos===1?'You won!':'Quiz complete'}</h2>
+   ${host?'':`<p class="s">You finished #${pos} with ${p?.score??0} points</p>`}
+   <div class="podium">${[1,0,2].filter(i=>lb[i]).map(i=>`<div class="pl p${i}"><span class="nm">${esc(lb[i].n)}</span><span class="pt">${lb[i].s} pts</span><div class="blk">${i+1}</div></div>`).join('')}</div>
+   ${lb.length>3?`<div class="lb rest" style="text-align:left">${lb.slice(3,10).map((x,i)=>`<div><span>${i+4}. ${esc(x.n)}</span><span>${x.s}</span></div>`).join('')}</div>`:''}
+   <button class="btn full" data-a="${host?'end':'leave'}">${host?'Close room':'Back to start'}</button></div>`;
+}
+
+/* ---------- Render + timer ---------- */
+function draw(){
+  const S=sess();
+  if(!S)me.screen='login';
+  else{
+    if(me.screen==='login')me.screen='home';
+    if(S.role!=='host'&&['menu','build'].includes(me.screen))me.screen='home';
+  }
+  const keep={};document.querySelectorAll('#app input,#app select').forEach(el=>keep[el.id]=el.value);
+  const v={login:loginView,home,menu,build,room}[me.screen]||home;
+  $('#app').innerHTML=v();
+  if(['home','build','login'].includes(me.screen))Object.entries(keep).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&val)el.value=val});
+  $('#who').innerHTML=S?`${me.code?(me.role==='host'?'Hosting room ':'Room ')+me.code+' · ':''}${esc(S.name)} (${S.role==='host'?'Teacher':'Student'}) <button class="logout" data-a="logout">Log out</button>`:'';
+  clearInterval(tick); const r=me.screen==='room'?getRoom():null;
+  if(r&&r.phase==='question'){
+    const lim=r.quiz.limit*1000+(r.extra||0), step=()=>{
+      const raw=lim-(Date.now()-r.startedAt), left=Math.max(0,raw), tl=$('#tl'), bar=$('#bar');
+      if(tl)tl.textContent=Math.ceil(left/1000)+'s'; if(bar)bar.style.width=(left/lim*100)+'%';
+      const f=getRoom(), host=me.role==='host', all=f&&Object.values(f.players).length&&Object.values(f.players).every(x=>x.answers[f.qi]!==undefined);
+      if((all&&host)||raw<=(host?0:-1500)){clearInterval(tick);reveal()}
+    };
+    step(); tick=setInterval(step,200);
+  }
+  if(r&&r.phase==='reveal'&&me.role==='host')return;
+}
+draw();
+</script>
+</body>
+</html>
